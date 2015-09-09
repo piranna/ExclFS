@@ -1,0 +1,28 @@
+{
+  "name": "exclfs",
+  "version": "0.0.0",
+  "description": "Overlay filesystem to give exclusive access to each file",
+  "bin": "cli.js",
+  "dependencies": {
+    "fuse-bindings": "^2.6.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NodeOS/ExclFS.git"
+  },
+  "keywords": [
+    "exclusive",
+    "filesystem",
+    "lock",
+    "permissions"
+  ],
+  "author": "Jesús Leganés Combarro 'piranna' <piranna@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NodeOS/ExclFS/issues"
+  },
+  "homepage": "https://github.com/NodeOS/ExclFS#readme"
+}
