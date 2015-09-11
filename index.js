@@ -4,26 +4,18 @@ var join = require('path').join
 var context = require('fuse-bindings').context
 
 
-const nullSet =
-{
-  has: function(value)
-  {
-    return false
-  }
-}
-
-
 function ExclFS(lowerLayer)
 {
   if(!(this instanceof ExclFS)) return new ExclFS(lowerLayer)
 
 
-  var filesInUse = new Set()
-  var filesInUse_byUid = {}
+  var filesInUse = {}
 
-  function canUse(path, inUse_byUid)
+  function canUse(path, uid)
   {
-    return inUse_byUid.has(path) || !filesInUse.has(path)
+    var pathUid = filesInUse[path]
+
+    return pathUid === uid || pathUid === undefined
   }
 
 
@@ -42,11 +34,10 @@ function ExclFS(lowerLayer)
       if(error) return callback(error)
 
       var uid = context().uid
-      var inUse_byUid = filesInUse_byUid[uid] || nullSet
 
       callback(null, files.filter(function(entry)
       {
-        return canUse(join(path, entry), inUse_byUid)
+        return canUse(join(path, entry), uid)
       }))
     })
   }
@@ -68,10 +59,7 @@ function ExclFS(lowerLayer)
     {
       if(error) return callback(error)
 
-      var uid = context().uid
-      var inUse_byUid = filesInUse_byUid[uid] || nullSet
-
-      callback(!canUse(path, inUse_byUid))
+      callback(!canUse(path, context().uid))
     })
   }
   this.open = function(path, flags, callback)
@@ -80,34 +68,27 @@ function ExclFS(lowerLayer)
     {
       if(error) return callback(error)
 
-      filesInUse.add(path)
-
-      var uid = context().uid
-      var inUse_byUid = filesInUse_byUid[uid]
-      if(!inUse_byUid)
-        filesInUse_byUid[uid] = inUse_byUid = new Set()
-
-      inUse_byUid.add(path)
+      filesInUse[path] = context().uid
 
       callback(null, fd)
     })
   }
   this.read = function(path, fd, buffer, length, position, callback)
   {
-    fs.read(fd, buffer, 0, length, position, function(error, bytesRead, buffer)
+    fs.read(fd, buffer, 0, length, position, function(error, bytesRead)
     {
       if(error) return callback(error)
 
-      return callback(bytesRead)
+      callback(bytesRead)
     })
   }
   this.write = function(path, fd, buffer, length, position, callback)
   {
-    fs.write(fd, buffer, position, function(error, written, string)
+    fs.write(fd, buffer, position, function(error, bytesWritten)
     {
       if(error) return callback(error)
 
-      return callback(written)
+      callback(bytesWritten)
     })
   }
   this.release = function(path, fd, callback)
@@ -116,14 +97,7 @@ function ExclFS(lowerLayer)
     {
       if(error) return callback(error)
 
-      filesInUse.delete(path)
-
-      var uid = context().uid
-      var inUse_byUid = filesInUse_byUid[uid]
-
-      inUse_byUid.delete(path)
-      if(!inUse_byUid.size)
-        delete filesInUse_byUid[uid]
+      delete filesInUse[path]
 
       callback()
     })
