@@ -13,9 +13,10 @@ function ExclFS(lowerLayer)
 
   function canUse(path, uid)
   {
-    var pathUid = filesInUse[path]
+    var file = filesInUse[path]
+    if(!file) return true
 
-    return pathUid === uid || pathUid === undefined
+    return file.uid === uid
   }
 
 
@@ -68,7 +69,15 @@ function ExclFS(lowerLayer)
     {
       if(error) return callback(error)
 
-      filesInUse[path] = context().uid
+      var file = filesInUse[path]
+      if(!file)
+        filesInUse[path] = file =
+        {
+          counter: 0
+          uid: context().uid
+        }
+
+      file.counter++
 
       callback(null, fd)
     })
@@ -97,7 +106,10 @@ function ExclFS(lowerLayer)
     {
       if(error) return callback(error)
 
-      delete filesInUse[path]
+      var file = filesInUse[path]
+      file.counter--
+      if(!file.counter)
+        delete filesInUse[path]
 
       callback()
     })
