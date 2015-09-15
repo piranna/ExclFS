@@ -22,7 +22,17 @@ function ExclFS(lowerLayer)
 
   this.getattr = function(path, callback)
   {
-    fs.lstat(join(lowerLayer, path), callback)
+    fs.lstat(join(lowerLayer, path), function(error, stats)
+    {
+      if(error) return callback(error)
+
+      var uid = context().uid
+
+      var file = filesInUse[path]
+      if(file && file.uid === uid) stats.uid = uid
+
+      callback(null, stats)
+    })
   }
 
 
