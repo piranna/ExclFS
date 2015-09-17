@@ -5,9 +5,11 @@ var context = require('fuse-bindings').context
 var filter  = require('async').filter
 
 
-function ExclFS(lowerLayer)
+function ExclFS(lowerLayer, whitelist)
 {
   if(!(this instanceof ExclFS)) return new ExclFS(lowerLayer)
+
+  whitelist = (whitelist || []).map(RegExp)
 
 
   function getFilePath(path, callback)
@@ -58,14 +60,24 @@ function ExclFS(lowerLayer)
   {
     path = join(path, entry)
 
-    getFilePath(path, function(error, path)
+    getFilePath(path, function(error, filepath)
     {
       if(error) return callback(false)
 
-      var file = filesInUse[path]
-      if(file && file.uid === uid) return callback(true)
+      var file = filesInUse[filepath]
+      if(!file)
+      {
+        // File not being used/owned, check if it's whitelisted
+        for(var entry in whitelist)
+          if(entry.test(path))
+            return callback(true)
+      }
 
-      fs.stat(path, function(error, stats)
+      // Check if file is we are using the file ("owned" by us)
+      else if(file.uid === uid) return callback(true)
+
+      // Other users or not whitelisted, use 'group' & 'others' file permissions
+      fs.stat(filepath, function(error, stats)
       {
         if(error) return callback(error)
 
