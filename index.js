@@ -2,6 +2,7 @@ var fs   = require('fs')
 var join = require('path').join
 
 var context = require('fuse-bindings').context
+var filter  = require('async').filter
 
 
 function ExclFS(lowerLayer)
@@ -9,34 +10,69 @@ function ExclFS(lowerLayer)
   if(!(this instanceof ExclFS)) return new ExclFS(lowerLayer)
 
 
-  var filesInUse = {}
-
-  function canUse(path, uid)
+  function getFilePath(path, callback)
   {
-    var file = filesInUse[path]
-    if(!file) return true
-
-    return file.uid === uid
+    fs.realpath(join(lowerLayer, path), callback)
   }
+
+
+  var filesInUse = {}
 
 
   this.getattr = function(path, callback)
   {
-    fs.lstat(join(lowerLayer, path), function(error, stats)
+    getFilePath(path, function(error, path)
     {
       if(error) return callback(error)
 
-      var uid = context().uid
+      fs.stat(path, function(error, stats)
+      {
+        if(error) return callback(error)
 
-      var file = filesInUse[path]
-      if(file && file.uid === uid) stats.uid = uid
+        var mode = stats.mode
+        stats.mode = mode & 7007 || (mode & 0070) << 3
 
-      callback(null, stats)
+        var file = filesInUse[path]
+        if(file)
+        {
+          stats.uid = file.uid
+          stats.gid = file.gid
+        }
+        else
+        {
+          var ctx = context()
+
+          stats.uid = ctx.uid
+          stats.gid = ctx.gid
+        }
+
+        callback(null, stats)
+      })
     })
   }
 
 
   // Directories
+
+  function showEntry(path, uid, entry, callback)
+  {
+    path = join(path, entry)
+
+    getFilePath(path, function(error, path)
+    {
+      if(error) return callback(false)
+
+      var file = filesInUse[path]
+      if(file && file.uid === uid) return callback(true)
+
+      fs.stat(path, function(error, stats)
+      {
+        if(error) return callback(error)
+
+        callback(stats.mode & (file ? 0007 : 0077))
+      })
+    })
+  }
 
   this.readdir = function(path, callback)
   {
@@ -46,68 +82,47 @@ function ExclFS(lowerLayer)
 
       var uid = context().uid
 
-      callback(null, files.filter(function(entry)
-      {
-        return canUse(join(path, entry), uid)
-      }))
+      filter(files,
+        showEntry.bind(undefined, path, uid),
+        callback.bind(undefined, null))
     })
   }
 
 
   // Symlinks
 
-  this.readlink = function(path, callback)
-  {
-    fs.readlink(join(lowerLayer, path), callback)
-  }
+  this.readlink = getFilePath
 
 
   // Files
 
-  this.access = function(path, mode, callback)
-  {
-    fs.access(join(lowerLayer, path), mode, function(error)
-    {
-      if(error) return callback(error)
-
-      callback(!canUse(path, context().uid))
-    })
-  }
   this.open = function(path, flags, callback)
   {
-    fs.open(join(lowerLayer, path), flags, function(error, fd)
+    getFilePath(path, function(error, path)
     {
       if(error) return callback(error)
 
-      var file = filesInUse[path]
-      if(!file)
-        filesInUse[path] = file =
+      fs.open(path, flags, function(error, fd)
+      {
+        if(error) return callback(error)
+
+        var file = filesInUse[path]
+        if(!file)
         {
-          counter: 0
-          uid: context().uid
+          var ctx = context()
+
+          filesInUse[path] = file =
+          {
+            counter: 0,
+            uid: ctx.uid,
+            gid: ctx.gid
+          }
         }
 
-      file.counter++
+        file.counter++
 
-      callback(null, fd)
-    })
-  }
-  this.read = function(path, fd, buffer, length, position, callback)
-  {
-    fs.read(fd, buffer, 0, length, position, function(error, bytesRead)
-    {
-      if(error) return callback(error)
-
-      callback(bytesRead)
-    })
-  }
-  this.write = function(path, fd, buffer, length, position, callback)
-  {
-    fs.write(fd, buffer, position, function(error, bytesWritten)
-    {
-      if(error) return callback(error)
-
-      callback(bytesWritten)
+        callback(null, fd)
+      })
     })
   }
   this.release = function(path, fd, callback)
@@ -124,6 +139,18 @@ function ExclFS(lowerLayer)
       callback()
     })
   }
+}
+
+
+// Files
+
+ExclFS.prototype.read = function(path, fd, buffer, length, position, callback)
+{
+  fs.read(fd, buffer, 0, length, position, callback)
+}
+ExclFS.prototype.write = function(path, fd, buffer, length, position, callback)
+{
+  fs.write(fd, buffer, position, callback)
 }
 
 

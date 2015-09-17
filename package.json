@@ -4,6 +4,7 @@
   "description": "Overlay filesystem to give exclusive access to each file",
   "bin": "cli.js",
   "dependencies": {
+    "async": "^1.4.2",
     "fuse-bindings": "^2.6.0"
   },
   "scripts": {
