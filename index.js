@@ -7,7 +7,7 @@ var filter  = require('async').filter
 
 function ExclFS(lowerLayer, whitelist)
 {
-  if(!(this instanceof ExclFS)) return new ExclFS(lowerLayer)
+  if(!(this instanceof ExclFS)) return new ExclFS(lowerLayer, whitelist)
 
   whitelist = (whitelist || []).map(RegExp)
 
@@ -31,8 +31,15 @@ function ExclFS(lowerLayer, whitelist)
       {
         if(error) return callback(error)
 
+        var ctx = context()
+
         var mode = stats.mode
-        stats.mode = mode & 7007 || (mode & 0070) << 3
+        stats.mode = mode & 7007
+
+        if(stats.uid === ctx.uid)
+          stats.mode |= mode & 0700
+        else
+          stats.mode |= (mode & 0070) << 3
 
         var file = filesInUse[path]
         if(file)
@@ -42,8 +49,6 @@ function ExclFS(lowerLayer, whitelist)
         }
         else
         {
-          var ctx = context()
-
           stats.uid = ctx.uid
           stats.gid = ctx.gid
         }
@@ -73,7 +78,7 @@ function ExclFS(lowerLayer, whitelist)
             return callback(true)
       }
 
-      // Check if file is we are using the file ("owned" by us)
+      // Check if we are using the file ("owned" by us)
       else if(file.uid === uid) return callback(true)
 
       // Other users or not whitelisted, use 'group' & 'others' file permissions
@@ -81,7 +86,7 @@ function ExclFS(lowerLayer, whitelist)
       {
         if(error) return callback(error)
 
-        callback(stats.mode & (file ? 0007 : 0077))
+        callback(stats.uid === uid || stats.mode & (file ? 0007 : 0077))
       })
     })
   }
@@ -92,11 +97,9 @@ function ExclFS(lowerLayer, whitelist)
     {
       if(error) return callback(error)
 
-      var uid = context().uid
-
       filter(files,
-        showEntry.bind(undefined, path, uid),
-        callback.bind(undefined, null))
+             showEntry.bind(undefined, path, context().uid),
+             callback.bind(undefined, null))
     })
   }
 
