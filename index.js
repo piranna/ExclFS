@@ -34,7 +34,7 @@ function ExclFS(lowerLayer, whitelist)
         var ctx = context()
 
         var mode = stats.mode
-        stats.mode = mode & 7007
+        stats.mode = mode & ~0770
 
         if(stats.uid === ctx.uid)
           stats.mode |= mode & 0700
@@ -154,6 +154,9 @@ function ExclFS(lowerLayer, whitelist)
       callback()
     })
   }
+
+  // [ToDO] Move to server.js when we are ready for nan2
+  this.options = ['nonempty']
 }
 
 

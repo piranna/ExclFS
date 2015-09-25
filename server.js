@@ -21,7 +21,10 @@ var whitelist  = process.argv[4]
 if(whitelist) whitelist = readFileSync(whitelist, 'utf8').split('\n')
 
 
-fuse.mount(mountPoint, ExclFS(lowerLayer, whitelist))
+fuse.mount(mountPoint, ExclFS(lowerLayer, whitelist), function(error)
+{
+  if(error) console.error('ExclFS failed to mount:',error)
+})
 
 process.on('SIGINT', function()
 {

@@ -5,10 +5,10 @@
   "bin": "server.js",
   "dependencies": {
     "async": "^1.4.2",
-    "fuse-bindings": "^2.6.0"
+    "fuse-bindings": "NodeOS/fuse-bindings"
   },
   "scripts": {
-    "test": "npm start prueba /dev"
+    "test": "npm start test /dev"
   },
   "repository": {
     "type": "git",
