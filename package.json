@@ -8,7 +8,7 @@
     "fuse-bindings": "NodeOS/fuse-bindings"
   },
   "scripts": {
-    "test": "npm start test /dev"
+    "test": "npm start /dev test"
   },
   "repository": {
     "type": "git",
