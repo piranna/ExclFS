@@ -1,6 +1,6 @@
 {
   "name": "exclfs",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Overlay filesystem to give exclusive access to each file",
   "bin": "server.js",
   "dependencies": {
