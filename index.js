@@ -5,11 +5,14 @@ var context = require('fuse-bindings').context
 var filter  = require('async').filter
 
 
-function ExclFS(lowerLayer, whitelist)
+function ExclFS(lowerLayer, options)
 {
-  if(!(this instanceof ExclFS)) return new ExclFS(lowerLayer, whitelist)
+  if(!(this instanceof ExclFS)) return new ExclFS(lowerLayer, options)
 
-  whitelist = (whitelist || []).map(RegExp)
+  var ownerPerm = options.ownerPerm
+  var whitelist = (options.whitelist || []).map(RegExp)
+
+  const SHOW_OWNER_MASK = ownerPerm ? 0707 : 0077
 
 
   function getFilePath(path, callback)
@@ -36,7 +39,7 @@ function ExclFS(lowerLayer, whitelist)
         var mode = stats.mode
         stats.mode = mode & ~0770
 
-        if(stats.uid === ctx.uid)
+        if(ownerPerm || stats.uid === ctx.uid)
           stats.mode |= mode & 0700
         else
           stats.mode |= (mode & 0070) << 3
@@ -81,12 +84,13 @@ function ExclFS(lowerLayer, whitelist)
       // Check if we are using the file ("owned" by us)
       else if(file.uid === uid) return callback(true)
 
-      // Other users or not whitelisted, use 'group' & 'others' file permissions
+      // Other users or not whitelisted
       fs.stat(filepath, function(error, stats)
       {
-        if(error) return callback(error)
+        if(error) return callback(false)
 
-        callback(stats.uid === uid || stats.mode & (file ? 0007 : 0077))
+        // Real file is owned by us, or use 'owner' & 'others' file permissions
+        callback(stats.uid === uid || stats.mode & (file ? 0007 : SHOW_OWNER_MASK))
       })
     })
   }
