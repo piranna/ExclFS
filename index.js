@@ -156,7 +156,7 @@ function ExclFS(lowerLayer, whitelist)
   }
 
   // [ToDO] Move to server.js when we are ready for nan2
-  this.options = ['dev', 'nonempty']
+  this.options = ['allow_other', 'dev', 'nonempty']
 }
 
 
