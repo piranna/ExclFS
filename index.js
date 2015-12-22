@@ -15,6 +15,9 @@ function ExclFS(lowerLayer, options)
   const SHOW_OWNER_MASK = ownerPerm ? 0707 : 0077
 
 
+  /**
+   * Get path on the underlaying filesystem in an unique way
+   */
   function getFilePath(path, callback)
   {
     fs.realpath(join(lowerLayer, path), callback)
@@ -52,6 +55,7 @@ function ExclFS(lowerLayer, options)
         }
         else
         {
+          // [ToDo] confirm that we can't use `-1` (unknown) ofr uid & gid
           stats.uid = ctx.uid
           stats.gid = ctx.gid
         }
@@ -146,16 +150,19 @@ function ExclFS(lowerLayer, options)
   }
   this.release = function(path, fd, callback)
   {
-    fs.close(fd, function(error)
+    getFilePath(path, function(error, path)
     {
       if(error) return callback(error)
 
-      var file = filesInUse[path]
-      file.counter--
-      if(!file.counter)
-        delete filesInUse[path]
+      fs.close(fd, function(error)
+      {
+        if(error) return callback(error)
 
-      callback()
+        if(!--filesInUse[path].counter)
+          delete filesInUse[path]
+
+        callback()
+      })
     })
   }
 
