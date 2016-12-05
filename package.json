@@ -4,8 +4,8 @@
   "description": "Overlay filesystem to give exclusive access to each file",
   "bin": "server.js",
   "dependencies": {
-    "async": "^1.4.2",
-    "fuse-bindings": "NodeOS/fuse-bindings"
+    "async": "^2.1.4",
+    "fuse-bindings": "^2.10.1"
   },
   "scripts": {
     "test": "npm start null test -o lowerLayer=/dev"
