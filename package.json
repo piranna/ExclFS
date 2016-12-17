@@ -5,7 +5,7 @@
   "bin": "server.js",
   "dependencies": {
     "async": "^2.1.4",
-    "fuse-bindings": "^2.10.1"
+    "fuse-bindings": "piranna/fuse-bindings"
   },
   "scripts": {
     "test": "npm start null test -o lowerLayer=/dev"
