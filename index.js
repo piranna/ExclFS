@@ -74,7 +74,7 @@ function ExclFS(lowerLayer, options)
 
     getFilePath(path, function(error, filepath)
     {
-      if(error) return callback(false)
+      if(error) return callback(error)
 
       var file = filesInUse[filepath]
       if(!file)
@@ -82,19 +82,20 @@ function ExclFS(lowerLayer, options)
         // File not being used/owned, check if it's whitelisted
         for(var entry in whitelist)
           if(entry.test(path))
-            return callback(true)
+            return callback(null, true)
       }
 
       // Check if we are using the file ("owned" by us)
-      else if(file.uid === uid) return callback(true)
+      else if(file.uid === uid) return callback(null, true)
 
       // Other users or not whitelisted
       fs.stat(filepath, function(error, stats)
       {
-        if(error) return callback(false)
+        if(error) return callback(error)
 
         // Real file is owned by us, or use 'owner' & 'others' file permissions
-        callback(stats.uid === uid || stats.mode & (file ? 0007 : SHOW_OWNER_MASK))
+        callback(null, stats.uid === uid
+                    || stats.mode & (file ? 0007 : SHOW_OWNER_MASK))
       })
     })
   }
@@ -105,9 +106,7 @@ function ExclFS(lowerLayer, options)
     {
       if(error) return callback(error)
 
-      filter(files,
-             showEntry.bind(undefined, path, context().uid),
-             callback.bind(undefined, null))
+      filter(files, showEntry.bind(undefined, path, context().uid), callback)
     })
   }
 
