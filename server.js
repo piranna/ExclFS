@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 
-var readFileSync = require('fs').readFileSync
+const readFileSync = require('fs').readFileSync
 
-var fuse = require('fuse-bindings')
+const fuse = require('fuse-bindings')
 
-var ExclFS = require('./')
+const ExclFS = require('.')
+const parse  = require('./lib/parseMountArgv')
 
-var parse = require('./parseMountArgv')
 
-
-var argv = process.argv
+const argv = process.argv
 if(argv.length < 4)
 {
   console.error('Usage:', process.argv[1], '<dev>', '<path>',
@@ -18,12 +17,12 @@ if(argv.length < 4)
 }
 
 
-var args = parse(argv.slice(2))
+const args = parse(argv.slice(2))
 
-var mountPoint = args.path
+const mountPoint = args.path
 
-var options   = args.options
-var whitelist = options.whitelist
+const options   = args.options
+const whitelist = options.whitelist
 
 if(whitelist) options.whitelist = readFileSync(whitelist, 'utf8').split('\n')
 

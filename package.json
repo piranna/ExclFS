@@ -3,6 +3,7 @@
   "version": "0.0.3",
   "description": "Overlay filesystem to give exclusive access to each file",
   "bin": "server.js",
+  "main": "lib",
   "dependencies": {
     "async": "^2.1.4",
     "fuse-bindings": "piranna/fuse-bindings"
