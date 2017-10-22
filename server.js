@@ -2,10 +2,10 @@
 
 const readFileSync = require('fs').readFileSync
 
-const fuse = require('fuse-bindings')
+const fuse  = require('fuse-bindings')
+const parse = require('parse-mount-argv')
 
 const ExclFS = require('.')
-const parse  = require('./lib/parseMountArgv')
 
 
 const argv = process.argv
@@ -29,7 +29,7 @@ if(whitelist) options.whitelist = readFileSync(whitelist, 'utf8').split('\n')
 
 fuse.mount(mountPoint, ExclFS(args.dev, options), function(error)
 {
-  if(error) console.error('ExclFS failed to mount:',error)
+  if(error) console.error('ExclFS failed to mount:', error)
 })
 
 process.on('SIGINT', function()

@@ -3,17 +3,17 @@
   "version": "0.0.5",
   "description": "Overlay filesystem to give exclusive access to each file",
   "bin": "server.js",
-  "main": "lib",
   "dependencies": {
-    "async": "^2.1.4",
-    "fuse-bindings": "piranna/fuse-bindings"
+    "async": "^2.4.1",
+    "fuse-bindings": "piranna/fuse-bindings",
+    "parse-mount-argv": "^0.0.0"
   },
   "scripts": {
     "test": "npm start null test -o lowerLayer=/dev"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NodeOS/ExclFS.git"
+    "url": "git+https://github.com/piranna/ExclFS.git"
   },
   "keywords": [
     "exclusive",
@@ -24,7 +24,7 @@
   "author": "Jesús Leganés Combarro 'piranna' <piranna@gmail.com>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/NodeOS/ExclFS/issues"
+    "url": "https://github.com/piranna/ExclFS/issues"
   },
-  "homepage": "https://github.com/NodeOS/ExclFS#readme"
+  "homepage": "https://github.com/piranna/ExclFS#readme"
 }
