@@ -4,7 +4,7 @@
   "description": "Overlay filesystem to give exclusive access to each file",
   "bin": "server.js",
   "dependencies": {
-    "async": "^2.4.1",
+    "async": "^3.2.2",
     "fuse-bindings": "piranna/fuse-bindings",
     "parse-mount-argv": "^0.0.0"
   },
